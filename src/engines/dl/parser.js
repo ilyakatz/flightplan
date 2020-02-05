@@ -377,6 +377,10 @@ module.exports = class extends Parser {
     return { segment, toCity };
   }
 
+  test() {
+    request("http://www.google.com", function(error, response, body) {});
+  }
+
   getArrivalTimeFromExternal(
     airline,
     flightNumber,
@@ -384,16 +388,65 @@ module.exports = class extends Parser {
     fromCity,
     departDate
   ) {
-    const year = departDate.format("Y");
-    const month = departDate.format("MM");
-    const day = departDate.format("DD");
+    url = "https://www.delta.com/shop/modals/flightspecific";
+
+    headers = {
+      "user-agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36",
+      "content-type": "application/json; charset=UTF-8",
+      "Accept-Encoding": "compress",
+      cachekey: "d6469dbe-b47e-4f46-be02-12b900011c7c"
+    };
+
+    data = {
+      legList: [
+        {
+          originAirportCode: "BOS",
+          destinationAirportCode: "JFK",
+          schedLocalDepartDate: "2020-03-10T08:30",
+          marketingAirlineCode: "DL",
+          operatingAirlineCode: "9E",
+          classOfServiceList: ["NE", "NV", "SN", "OZ"],
+          flightNumber: "5419"
+        }
+      ],
+      pageId: "dynamic-modal",
+      appId: "sho",
+      channelId: "ecomm"
+    };
+
+    res = request("GET", url, {
+      headers: headers,
+      data: JSON.stringify(data)
+    });
+
+    data = {};
+
+    var options = {
+      url: url,
+      headers: headers,
+      data: data
+    };
+
+    function callback(error, response, body) {
+      console.log("calling back " + body);
+    }
+
+    request(options, function(error, response, body) {
+      console.log(response);
+      console.log(response.request.req.toCurl());
+    });
+
+    // const year = departDate.format("Y");
+    // const month = departDate.format("MM");
+    // const day = departDate.format("DD");
     // console.log(` ${year} ${month} ${day}`);
     const url = `https://www.flightstats.com/v2/flight-tracker/${airline}/${flightNumber}?year=${year}&month=${month}&date=${day}`;
 
     const res = request("GET", url);
     const body = res.getBody("utf-8");
-    const matcher = body.match(/__NEXT_DATA__\s=(.*)/);
-    const nextDataJson = matcher[1];
+    // const matcher = body.match(/__NEXT_DATA__\s=(.*)/);
+    // const nextDataJson = matcher[1];
     const nextData = JSON.parse(nextDataJson);
 
     let scheduledArrival, scheduledDeparture;
@@ -523,3 +576,107 @@ module.exports = class extends Parser {
     return $(row).find(".flightStopLayover").length - 1;
   }
 };
+
+var request = require("request");
+require("request-to-curl");
+
+url = "https://www.delta.com/shop/modals/flightspecific";
+
+headers = {
+  "user-agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36",
+  "Content-Type": "application/json; charset=UTF-8",
+  cachekey: "d6469dbe-b47e-4f46-be02-12b900011c7c",
+  "Accept-Encoding": "compressed"
+};
+
+dataRaw =
+  '{"legList":[{"originAirportCode":"BOS","destinationAirportCode":"JFK","schedLocalDepartDate":"2020-03-10T08:30","marketingAirlineCode":"DL","operatingAirlineCode":"9E","classOfServiceList":["NE","NV","SN","OZ"],"flightNumber":"5419"}],"pageId":"dynamic-modal","appId":"sho","channelId":"ecomm"}';
+
+data = {
+  legList: [
+    {
+      originAirportCode: "BOS",
+      destinationAirportCode: "JFK",
+      schedLocalDepartDate: "2020-03-10T08:30",
+      marketingAirlineCode: "DL",
+      operatingAirlineCode: "9E",
+      classOfServiceList: ["NE", "NV", "SN", "OZ"],
+      flightNumber: "5419"
+    }
+  ],
+  pageId: "dynamic-modal",
+  appId: "sho",
+  channelId: "ecomm"
+};
+
+options = {
+  url: "https://www.delta.com/shop/modals/flightspecific",
+  method: "POST",
+  headers: headers,
+  "data-raw": dataRaw
+};
+
+request(options, function(error, response, body) {
+  console.log("error:", error); // Print the error if one occurred
+  console.log("statusCode:", response && response.statusCode); // Print the response status code if a response was received
+  console.log("body:", body); // Print the HTML for the Google homepage.
+  // console.log(response.request.req.toCurl());
+  console.log(JSON.stringify(response));
+});
+
+/**
+ * 
+% curl 'https://www.delta.com/shop/modals/flightspecific' \                                                                                                                                               ✹ ✭
+-H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'  \
+-H 'content-type: application/json; charset=UTF-8' \
+-H 'cachekey: d6469dbe-b47e-4f46-be02-12b900011c7c' \
+--data '{"legList":[{"originAirportCode":"BOS","destinationAirportCode":"JFK","schedLocalDepartDate":"2020-03-10T08:30","marketingAirlineCode":"DL","operatingAirlineCode":"9E","classOfServiceList":["NE","NV","SN","OZ"],"flightNumber":"5419"}],"pageId":"dynamic-modal","appId":"sho","channelId":"ecomm"}' \
+--compressed
+
+ works
+
+curl 'https://www.delta.com/shop/modals/flightspecific' \
+-H 'user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'  \
+-H 'content-type: application/json; charset=UTF-8' \
+-H 'cachekey: d6469dbe-b47e-4f46-be02-12b900011c7c' \
+-H "Accept-Encoding: compressed" \
+--data-raw '{"legList":[{"originAirportCode":"BOS","destinationAirportCode":"JFK","schedLocalDepartDate":"2020-03-10T08:30","marketingAirlineCode":"DL","operatingAirlineCode":"9E","classOfServiceList":["NE","NV","SN","OZ"],"flightNumber":"5419"}],"pageId":"dynamic-modal","appId":"sho","channelId":"ecomm"}'
+
+request(options, function(error, response, body) {
+  console.log("error:", error); // Print the error if one occurred
+  console.log("statusCode:", response && response.statusCode); // Print the response status code if a response was received
+  console.log("body:", body); // Print the HTML for the Google homepage.
+  // console.log(response.request.req.toCurl());
+  // console.log(JSON.stringify(response));
+})
+
+Minimum
+
+*/
+
+const axios = require("axios");
+
+headers = {
+  "user-agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36",
+  "Content-Type": "application/json; charset=UTF-8",
+  cachekey: "d6469dbe-b47e-4f46-be02-12b900011c7c",
+  "Accept-Encoding": "compressed"
+};
+
+data =
+  '{"legList":[{"originAirportCode":"BOS","destinationAirportCode":"JFK","schedLocalDepartDate":"2020-03-10T08:30","marketingAirlineCode":"DL","operatingAirlineCode":"9E","classOfServiceList":["NE","NV","SN","OZ"],"flightNumber":"5419"}],"pageId":"dynamic-modal","appId":"sho","channelId":"ecomm"}';
+
+url = "https://www.delta.com/shop/modals/flightspecific";
+
+options = {
+  method: "POST",
+  headers: headers,
+  data: data,
+  url: url
+};
+
+axios(options).then(function(response) {
+  console.log(response);
+});
