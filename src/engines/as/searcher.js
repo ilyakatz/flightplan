@@ -68,15 +68,18 @@ module.exports = class extends Searcher {
       }
 
       // Ensure results exist and there are no errors
-      if (!(await page.$('#MatrixResultColumn'))) {
-        let msgError = await this.textContent('.errorTextSummary')
+      if (!(await page.$("#MatrixResultColumn"))) {
+        let msgError = await page.evaluate(() => {
+          const el = document.querySelector(".errorAdvisory");
+          return el.innerText;
+        });
         if (msgError) {
-          throw new Searcher.Error(`Website returned error: ${msgError}`)
+          throw new Searcher.Error(`Website returned error: ${msgError}`);
         } else {
-          throw new Searcher.Error('Unable to locate flight results')
+          throw new Searcher.Error("Unable to locate flight results");
         }
       }
-      break
+      break;
     }
   }
 }
